@@ -37,4 +37,10 @@ class GenericImageDatasetJob(ImageDatasetJob):
                 return t
         return None
 
+    # XXX GTC Demo
 
+    def is_drivenet(self):
+        try:
+            return self._is_drivenet
+        except AttributeError:
+            return False

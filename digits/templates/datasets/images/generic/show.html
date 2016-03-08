@@ -51,6 +51,11 @@
                     <dd>{{job.dir()}}</dd>
                     <dt>Dataset size</dt>
                     <dd>{{job.disk_size_fmt()}}</dd>
+                    {# XXX GTC Demo #}
+                    {% if job.is_drivenet() %}
+                    <dt>Validation labels</dt>
+                    <dd>{{ job.drivenet_val_labels_dir }}</dd>
+                    {% endif %}
                 </dl>
             </div>
         </div>

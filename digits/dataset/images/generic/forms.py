@@ -1,6 +1,7 @@
 # Copyright (c) 2015-2016, NVIDIA CORPORATION.  All rights reserved.
 from __future__ import absolute_import
 
+import os
 import os.path
 
 import wtforms
@@ -84,4 +85,34 @@ class GenericImageDatasetForm(ImageDatasetForm):
                 ],
             tooltip = "Path to a .binaryproto file on the server"
             )
+
+    # XXX GTC demo
+
+    is_drivenet_data = utils.forms.BooleanField(
+        'DriveNet data',
+        tooltip='Check if this data should be flagged for use with DriveNet',
+    )
+    drivenet_val_labels_dir = utils.forms.StringField(
+        'Validation labels directory',
+        validators=[
+            validate_required_iff(is_drivenet_data=True),
+        ],
+        tooltip='The original KITTI-formatted label textfiles are needed for mAP calculations',
+    )
+    def validate_drivenet_val_labels_dir(form, field):
+        if not field.data:
+            pass
+        else:
+            # make sure the filesystem path exists
+            if not os.path.exists(field.data) or not os.path.isdir(field.data):
+                raise validators.ValidationError('Directory does not exist')
+
+            # Cryptic command to get the last part of the path
+            # Necessary in case there's a trailing slash
+            last_part = os.path.basename(os.path.dirname(os.path.join(field.data, '')))
+            if last_part != 'label_2':
+                if 'label_2' in os.listdir(field.data):
+                    field.data = os.path.join(field.data, 'label_2')
+                else:
+                    raise validators.ValidationError("Can't find label2/ directory nearby")
 

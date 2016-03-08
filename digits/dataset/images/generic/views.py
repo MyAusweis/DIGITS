@@ -99,6 +99,14 @@ def create():
                             )
                         )
 
+        # XXX GTC demo
+
+        if form.is_drivenet_data.data:
+            job._is_drivenet = True
+            job.drivenet_val_labels_dir = form.drivenet_val_labels_dir.data
+        else:
+            job._is_drivenet = False
+
         ## Save form data with the job so we can easily clone it later.
         save_form_to_job(job, form)
 
