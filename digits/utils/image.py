@@ -476,3 +476,41 @@ def get_color_map(name):
         bluemap     = [0.5,1,1,1,0.5,0,0,0,0]
     return 255.0 * np.array(redmap), 255.0 * np.array(greenmap), 255.0 * np.array(bluemap)
 
+
+# XXX GTC demo
+
+def add_bboxes_to_image(image, bboxes, color='red', width=1):
+    """
+    Draw rectangles on the image for the bounding boxes
+    Returns a PIL.Image
+
+    Arguments:
+    image -- input image
+    bboxes -- bounding boxes in the [((l, t), (r, b)), ...] format
+
+    Keyword arguments:
+    color -- color to draw the rectangles
+    width -- line width of the rectangles
+
+    Example:
+    image = Image.open(filename)
+    add_bboxes_to_image(image, bboxes[filename], width=2, color='#FF7700')
+    image.show()
+    """
+    def expanded_bbox(bbox, n):
+        """
+        Grow the bounding box by n pixels
+        """
+        l = min(bbox[0][0], bbox[1][0])
+        r = max(bbox[0][0], bbox[1][0])
+        t = min(bbox[0][1], bbox[1][1])
+        b = max(bbox[0][1], bbox[1][1])
+        return ((l - n, t - n), (r + n, b + n))
+
+    from PIL import Image, ImageDraw
+    draw = ImageDraw.Draw(image)
+    for bbox in bboxes:
+        for n in xrange(width):
+            draw.rectangle(expanded_bbox(bbox, n), outline = color)
+
+    return image
