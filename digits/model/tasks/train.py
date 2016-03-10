@@ -17,6 +17,8 @@ PICKLE_VERSION = 2
 
 # Used to store network outputs
 NetworkOutput = namedtuple('NetworkOutput', ['kind', 'data'])
+# For aynchronous outputs: epoch is not tied to current epoch and must be specified explicitly
+NetworkAsyncOutput = namedtuple('NetworkAsyncOutput', ['kind', 'epoch', 'data'])
 
 @subclass
 class TrainTask(Task):
@@ -71,6 +73,7 @@ class TrainTask(Task):
         # data gets stored as dicts of lists (for graphing)
         self.train_outputs = OrderedDict()
         self.val_outputs = OrderedDict()
+        self.async_outputs = OrderedDict()
 
     def __getstate__(self):
         state = super(TrainTask, self).__getstate__()
@@ -214,11 +217,56 @@ class TrainTask(Task):
         self.progress = epoch/self.train_epochs
         self.emit_progress_update()
 
+    def update_graph(self, train_data_updated = False):
+
+        from digits.webapp import socketio
+
+        # loss graph data
+        data = self.combined_graph_data()
+        if data:
+            socketio.emit('task update',
+                    {
+                        'task': self.html_id(),
+                        'update': 'combined_graph',
+                        'data': data,
+                        },
+                    namespace='/jobs',
+                    room=self.job_id,
+                    )
+
+            if train_data_updated:
+                if data['columns']:
+                    # isolate the Loss column data for the sparkline
+                    graph_data = data['columns'][0][1:]
+                    socketio.emit('task update',
+                                  {
+                                      'task': self.html_id(),
+                                      'job_id': self.job_id,
+                                      'update': 'combined_graph',
+                                      'data': graph_data,
+                                  },
+                                  namespace='/jobs',
+                                  room='job_management',
+                              )
+
+        if train_data_updated:
+            # lr graph data
+            data = self.lr_graph_data()
+            if data:
+                socketio.emit('task update',
+                        {
+                            'task': self.html_id(),
+                            'update': 'lr_graph',
+                            'data': data,
+                            },
+                        namespace='/jobs',
+                        room=self.job_id,
+                        )
+
     def save_train_output(self, *args):
         """
         Save output to self.train_outputs
         """
-        from digits.webapp import socketio
 
         if not self.save_output(self.train_outputs, *args):
             return
@@ -229,67 +277,36 @@ class TrainTask(Task):
 
         self.logger.debug('Training %s%% complete.' % round(100 * self.current_epoch/self.train_epochs,2))
 
-        # loss graph data
-        data = self.combined_graph_data()
-        if data:
-            socketio.emit('task update',
-                    {
-                        'task': self.html_id(),
-                        'update': 'combined_graph',
-                        'data': data,
-                        },
-                    namespace='/jobs',
-                    room=self.job_id,
-                    )
-
-            if data['columns']:
-                # isolate the Loss column data for the sparkline
-                graph_data = data['columns'][0][1:]
-                socketio.emit('task update',
-                              {
-                                  'task': self.html_id(),
-                                  'job_id': self.job_id,
-                                  'update': 'combined_graph',
-                                  'data': graph_data,
-                              },
-                              namespace='/jobs',
-                              room='job_management',
-                          )
-
-        # lr graph data
-        data = self.lr_graph_data()
-        if data:
-            socketio.emit('task update',
-                    {
-                        'task': self.html_id(),
-                        'update': 'lr_graph',
-                        'data': data,
-                        },
-                    namespace='/jobs',
-                    room=self.job_id,
-                    )
+        self.update_graph(True)
 
     def save_val_output(self, *args):
         """
         Save output to self.val_outputs
         """
-        from digits.webapp import socketio
 
         if not self.save_output(self.val_outputs, *args):
             return
 
-        # loss graph data
-        data = self.combined_graph_data()
-        if data:
-            socketio.emit('task update',
-                    {
-                        'task': self.html_id(),
-                        'update': 'combined_graph',
-                        'data': data,
-                        },
-                    namespace='/jobs',
-                    room=self.job_id,
-                    )
+        self.update_graph()
+
+    def save_async_output(self, name, kind, epoch, value):
+        """
+        Save output to self.async_outputs
+        """
+
+        d = self.async_outputs
+
+        # don't let them be unicode
+        name = str(name)
+        kind = str(kind)
+
+        if name not in d:
+            d[name] = NetworkAsyncOutput(kind, [epoch], [value])
+        else:
+            d[name].epoch.append(epoch)
+            d[name].data.append(value)
+
+        self.update_graph()
 
     def save_output(self, d, name, kind, value):
         """
@@ -522,6 +539,25 @@ class TrainTask(Task):
                     added_val_data = True
         if added_val_data:
             data['columns'].append(['val_epochs'] + self.val_outputs['epoch'].data[::stride])
+
+        if self.async_outputs:
+            for name, output in self.async_outputs.iteritems():
+                if cull:
+                    # max 200 data points
+                    stride = max(len(output.epoch)/100,1)
+                else:
+                    # return all data
+                    stride = 1
+                col_id = '%s-async' % name
+                col_epochs_id = '%s_epochs' % col_id
+                data['xs'][col_id] = col_epochs_id
+                data['names'][col_id] = name
+                data['columns'].append([col_epochs_id] + output.epoch[::stride])
+                if 'accuracy' in output.kind.lower():
+                    data['columns'].append([col_id] + [100*x for x in output.data[::stride]])
+                    data['axes'][col_id] = 'y2'
+                else:
+                    data['columns'].append([col_id] + output.data[::stride])
 
         if added_train_data:
             return data

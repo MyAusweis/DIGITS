@@ -855,7 +855,13 @@ class CaffeTrainTask(TrainTask):
                 self.logger.warning('caffe output format seems to have changed. Expected "Snapshotting solver state..." after "Snapshotting to..."')
             else:
                 self.logger.debug('Snapshot saved.')
+            n_snapshots_before = len(self.snapshots)
             self.detect_snapshots()
+            # did we find a new snapshot?
+            if len(self.snapshots) > n_snapshots_before:
+                # TODO: add filter to calculate mAP only when it makes sense to do so
+                # (figure it out from the model class or prototxt)
+                self.save_async_output('mAP', 'accuracy', epoch = self.snapshots[-1][1], value = self.snapshots[-1][1]/10.)
             self.send_snapshot_update()
             self.saving_snapshot = False
 
