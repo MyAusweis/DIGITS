@@ -858,6 +858,25 @@ class CaffeTrainTask(TrainTask):
             self.detect_snapshots()
             self.send_snapshot_update()
             self.saving_snapshot = False
+
+            if self.dataset.is_drivenet():
+                print 'Calculating map ...'
+                args = [
+                    '/home/lyeager/code/dlar/digits-detector/scripts/infer.py',
+                    '--val-path', os.path.dirname(self.dataset.drivenet_val_labels_dir),
+                    '--model-def', self.path(self.deploy_file),
+                    '--weights', self.path(self.snapshots[-1][0]),
+                    '--results-dir', '/tmp',
+                ]
+                print 'Args:', ', '.join(str(a) for a in args)
+                stdout = subprocess.check_output(args)
+                for line in stdout.split('\n'):
+                    match = re.match(r'.*P-R Moderate mAP (\S*)', line)
+                    if match:
+                        map_value = float(match.group(1))
+                        self.save_val_output('mAP', 'Accuracy', map_value)
+                        break
+
             return True
 
         # snapshot starting
