@@ -11,18 +11,24 @@ class ComputeMAPJob(Job):
     A Job that computes the MAP of an object detection model snapshot
     """
 
-    def __init__(self, model, val, snapshot, **kwargs):
+    def __init__(self, network, weights, val_dir, **kwargs):
         """
         Arguments:
-        model      -- path to model prototxt
-        val        -- path to validation DB
-        snapshot   -- path to model snapshot
+        network -- path to model prototxt
+        weights -- path to model snapshot
+        val_dir -- path to validation directory
         """
         super(ComputeMAPJob, self).__init__(username    = "compute_agent",
                                             name        = "Compute mAP",
                                             **kwargs)
         # create mAP task
-        self.tasks.append(ComputeMAPTask(model = model, val = val, snapshot = snapshot, job_dir = self.dir()))
+        self.tasks.append(
+            ComputeMAPTask(
+                network=network,
+                weights=weights,
+                val_dir=val_dir,
+                job_dir=self.dir()
+        ))
 
     def get_data(self):
         """Return mAP"""

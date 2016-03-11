@@ -866,44 +866,23 @@ class CaffeTrainTask(TrainTask):
                 self.logger.warning('caffe output format seems to have changed. Expected "Snapshotting solver state..." after "Snapshotting to..."')
             else:
                 self.logger.debug('Snapshot saved.')
-            n_snapshots_before = len(self.snapshots)
             self.detect_snapshots()
-            # did we find a new snapshot?
-            if len(self.snapshots) > n_snapshots_before:
-                if self.dataset.val_db_task() is not None:
-                    from digits.webapp import scheduler
-                    snapshot = self.snapshots[-1][0]
-                    epoch = self.snapshots[-1][1]
-                    # TODO: add filter to calculate mAP only when it makes sense to do so
-                    # (figure it out from the model class or prototxt)
-                    mAP_job = ComputeMAPJob(
-                        model = self.deploy_file,
-                        val = self.dataset.path(self.dataset.val_db_task().db_name),
-                        snapshot = snapshot,
-                        callback = mAP_callback,
-                        callback_arg = {'task': self, 'epoch': epoch},
-                    )
-                    scheduler.add_job(mAP_job, background_job = True)
             self.send_snapshot_update()
             self.saving_snapshot = False
 
+            # XXX GTC Demo
             if self.dataset.is_drivenet():
-                print 'Calculating map ...'
-                args = [
-                    '/home/lyeager/code/dlar/digits-detector/scripts/infer.py',
-                    '--val-path', os.path.dirname(self.dataset.drivenet_val_labels_dir),
-                    '--model-def', self.path(self.deploy_file),
-                    '--weights', self.path(self.snapshots[-1][0]),
-                    '--results-dir', '/tmp',
-                ]
-                print 'Args:', ', '.join(str(a) for a in args)
-                stdout = subprocess.check_output(args)
-                for line in stdout.split('\n'):
-                    match = re.match(r'.*P-R Moderate mAP (\S*)', line)
-                    if match:
-                        map_value = float(match.group(1))
-                        self.save_val_output('mAP', 'Accuracy', map_value)
-                        break
+                snapshot = self.snapshots[-1][0]
+                epoch = self.snapshots[-1][1]
+                mAP_job = ComputeMAPJob(
+                    network = self.path(self.deploy_file),
+                    weights = self.path(snapshot),
+                    val_dir = os.path.dirname(self.dataset.drivenet_val_labels_dir),
+                    callback = mAP_callback,
+                    callback_arg = {'task': self, 'epoch': epoch},
+                )
+                from digits.webapp import scheduler
+                scheduler.add_job(mAP_job, background_job = True)
 
             return True
 

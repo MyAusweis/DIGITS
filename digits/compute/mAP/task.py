@@ -3,11 +3,15 @@ from __future__ import absolute_import
 
 import os.path
 import re
+import shutil
 import sys
+import tempfile
 
 import digits
 from digits.task import Task
 from digits.utils import subclass, override
+
+PATH_TO_INFER_SCRIPT = '/home/lyeager/code/dlar/digits-detector/scripts/infer.py'
 
 @subclass
 class ComputeMAPTask(Task):
@@ -15,17 +19,17 @@ class ComputeMAPTask(Task):
     A task to compute the mAP of a model
     """
 
-    def __init__(self, model, val, snapshot, **kwargs):
+    def __init__(self, network, weights, val_dir, **kwargs):
         """
         Arguments:
-        model      -- path to model prototxt
-        val        -- path to validation DB
-        snapshot   -- path to model snapshot
+        network -- path to model prototxt
+        weights -- path to model snapshot
+        val_dir -- path to validation directory
         """
         # memorize parameters
-        self.model = model
-        self.val = val
-        self.snapshot = snapshot
+        self.network = network
+        self.weights = weights
+        self.val_dir = val_dir
 
         # resources
         self.gpu = None
@@ -41,20 +45,14 @@ class ComputeMAPTask(Task):
 
     @override
     def process_output(self, line):
-
         float_exp = '(NaN|[-+]?[0-9]*\.?[0-9]+(e[-+]?[0-9]+)?)'
 
-        timestamp, level, message = self.preprocess_output_digits(line)
-        if not message:
-            return False
-
-        match = re.match(r'MAP = %s' % float_exp, message, flags=re.IGNORECASE)
+        match = re.match(r'.*P-R Moderate mAP %s' % float_exp, line, flags=re.IGNORECASE)
         if match:
             value = float(match.group(1))
             self.mAP = value
-            return True
 
-        return False
+        return True
 
     @override
     def offer_resources(self, resources):
@@ -78,18 +76,24 @@ class ComputeMAPTask(Task):
         return None
 
     @override
+    def before_run(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    @override
     def task_arguments(self, resources, env):
-
         args = [sys.executable,
-            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(digits.__file__))), 'tools', 'calculate-map.py'),
-            self.model,
-            self.val,
-            self.snapshot
-            ]
+                PATH_TO_INFER_SCRIPT,
+                '--val-path', self.val_dir,
+                '--model-def', self.network,
+                '--weights', self.weights,
+                '--results-dir', self.tempdir,
+                ]
 
-        if self.gpu is not None:
-            args.append('--gpu=%d' % self.gpu)
+#        if self.gpu is not None:
+#            args.insert(0, 'CUDA_VISIBLE_DEVICES=%d' % self.gpu)
 
         return args
 
-
+    @override
+    def after_run(self):
+        shutil.rmtree(self.tempdir)

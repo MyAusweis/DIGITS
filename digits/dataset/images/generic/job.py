@@ -36,11 +36,3 @@ class GenericImageDatasetJob(ImageDatasetJob):
             if isinstance(t, tasks.AnalyzeDbTask) and 'train' in t.name().lower():
                 return t
         return None
-
-    # XXX GTC Demo
-
-    def is_drivenet(self):
-        try:
-            return self._is_drivenet
-        except AttributeError:
-            return False

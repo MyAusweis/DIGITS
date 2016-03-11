@@ -88,3 +88,11 @@ class DatasetJob(Job):
         """
         return [t for t in self.tasks if isinstance(t, tasks.AnalyzeDbTask)]
 
+
+    # XXX GTC Demo
+
+    def is_drivenet(self):
+        try:
+            return self._is_drivenet
+        except AttributeError:
+            return False
