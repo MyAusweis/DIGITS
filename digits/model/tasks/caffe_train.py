@@ -20,6 +20,7 @@ from digits import utils, dataset
 from digits.config import config_value
 from digits.status import Status
 from digits.utils import subclass, override, constants
+from digits.compute.mAP import ComputeMAPJob
 
 # Must import after importing digit.config
 import caffe
@@ -33,6 +34,16 @@ CAFFE_SOLVER_FILE = 'solver.prototxt'
 CAFFE_TRAIN_VAL_FILE = 'train_val.prototxt'
 CAFFE_SNAPSHOT_PREFIX = 'snapshot'
 CAFFE_DEPLOY_FILE = 'deploy.prototxt'
+
+def mAP_callback(arg, compute_job):
+    train_task = arg['task']
+    epoch = arg['epoch']
+    mAP = compute_job.get_data()
+    if mAP is not None:
+        train_task.save_async_output('mAP', 'accuracy', epoch = epoch, value = mAP)
+    # delete job
+    from digits.webapp import scheduler
+    scheduler.delete_job(compute_job)
 
 @subclass
 class Error(Exception):
@@ -859,9 +870,20 @@ class CaffeTrainTask(TrainTask):
             self.detect_snapshots()
             # did we find a new snapshot?
             if len(self.snapshots) > n_snapshots_before:
-                # TODO: add filter to calculate mAP only when it makes sense to do so
-                # (figure it out from the model class or prototxt)
-                self.save_async_output('mAP', 'accuracy', epoch = self.snapshots[-1][1], value = self.snapshots[-1][1]/10.)
+                if self.dataset.val_db_task() is not None:
+                    from digits.webapp import scheduler
+                    snapshot = self.snapshots[-1][0]
+                    epoch = self.snapshots[-1][1]
+                    # TODO: add filter to calculate mAP only when it makes sense to do so
+                    # (figure it out from the model class or prototxt)
+                    mAP_job = ComputeMAPJob(
+                        model = self.deploy_file,
+                        val = self.dataset.path(self.dataset.val_db_task().db_name),
+                        snapshot = snapshot,
+                        callback = mAP_callback,
+                        callback_arg = {'task': self, 'epoch': epoch},
+                    )
+                    scheduler.add_job(mAP_job, background_job = True)
             self.send_snapshot_update()
             self.saving_snapshot = False
 

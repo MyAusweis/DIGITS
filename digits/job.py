@@ -44,7 +44,7 @@ class Job(StatusCls):
                     task.detect_snapshots()
             return job
 
-    def __init__(self, name, username):
+    def __init__(self, name, username, callback = None, callback_arg = None):
         """
         Arguments:
         name -- name of this job
@@ -62,6 +62,8 @@ class Job(StatusCls):
         self.exception = None
         self._notes = None
         self.event = threading.Event()
+        self.callback = callback
+        self.callback_arg = callback_arg
 
         os.mkdir(self._dir)
 
@@ -188,6 +190,9 @@ class Job(StatusCls):
         if not self.status.is_running():
             # release threads that are waiting for job to complete
             self.event.set()
+            # invoke callback
+            if self.callback is not None:
+                self.callback(self.callback_arg, self)
 
     def abort(self):
         """

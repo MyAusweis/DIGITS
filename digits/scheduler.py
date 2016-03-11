@@ -102,6 +102,7 @@ class Scheduler:
                 'create_db_task_pool': [Resource(max_value=2)],
                 'analyze_db_task_pool': [Resource(max_value=4)],
                 'inference_task_pool': [Resource(max_value=4)],
+                'compute_task_pool': [Resource(max_value=4)],
                 'gpus': [Resource(identifier=index)
                     for index in gpu_list.split(',')] if gpu_list else [],
                 }
@@ -159,7 +160,7 @@ class Scheduler:
                 for job_id, e in failed_jobs:
                     logger.debug('%s - %s: %s' % (job_id, type(e).__name__, str(e)))
 
-    def add_job(self, job):
+    def add_job(self, job, background_job = False):
         """
         Add a job to self.jobs
         """
@@ -169,30 +170,31 @@ class Scheduler:
         else:
             self.jobs[job.id()] = job
 
-            # Need to fix this properly
-            # if True or flask._app_ctx_stack.top is not None:
-            from digits.webapp import app, socketio
-            with app.app_context():
-                # send message to job_management room that the job is added
-                html = flask.render_template('job_row.html', job = job)
+            if not background_job:
+                # Need to fix this properly
+                # if True or flask._app_ctx_stack.top is not None:
+                from digits.webapp import app, socketio
+                with app.app_context():
+                    # send message to job_management room that the job is added
+                    html = flask.render_template('job_row.html', job = job)
 
-                # Convert the html into a list for the jQuery
-                # DataTable.row.add() method.  This regex removes the <tr>
-                # and <td> tags, and splits the string into one element
-                # for each cell.
-                html = re.sub('<tr[^<]*>[\s\n\r]*<td[^<]*>[\s\n\r]*', '', html)
-                html = re.sub('[\s\n\r]*</td>[\s\n\r]*</tr>', '', html)
-                html = re.split('</td>[\s\n\r]*<td[^<]*>', html)
+                    # Convert the html into a list for the jQuery
+                    # DataTable.row.add() method.  This regex removes the <tr>
+                    # and <td> tags, and splits the string into one element
+                    # for each cell.
+                    html = re.sub('<tr[^<]*>[\s\n\r]*<td[^<]*>[\s\n\r]*', '', html)
+                    html = re.sub('[\s\n\r]*</td>[\s\n\r]*</tr>', '', html)
+                    html = re.split('</td>[\s\n\r]*<td[^<]*>', html)
 
-                socketio.emit('job update',
-                              {
-                                  'update': 'added',
-                                  'job_id': job.id(),
-                                  'html': html
-                              },
-                              namespace='/jobs',
-                              room='job_management',
-                          )
+                    socketio.emit('job update',
+                                  {
+                                      'update': 'added',
+                                      'job_id': job.id(),
+                                      'html': html
+                                  },
+                                  namespace='/jobs',
+                                  room='job_management',
+                              )
 
             if 'DIGITS_MODE_TEST' not in os.environ:
                 # Let the scheduler do a little work before returning
