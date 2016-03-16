@@ -717,6 +717,12 @@ class CaffeTrainTask(TrainTask):
             solver.momentum = 0.9
         solver.weight_decay = 0.0005
 
+        # XXX GTC Demo
+        if self.dataset.is_drivenet():
+            solver.weight_decay = 0.00000001
+            if solver.solver_type == solver.ADAM:
+                solver.momentum2 = 0.999
+
         # Display 8x per epoch, or once per 5000 images, whichever is more frequent
         solver.display = max(1, min(
                 int(math.floor(float(solver.max_iter) / (self.train_epochs * 8))),

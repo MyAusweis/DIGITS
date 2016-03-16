@@ -39,6 +39,8 @@ class CaffeFramework(Framework):
                                   'RMSPROP', 'ADADELTA', 'ADAM']
     else:
         SUPPORTED_SOLVER_TYPES = ['SGD', 'NESTEROV', 'ADAGRAD']
+        # XXX GTC Demo
+        SUPPORTED_SOLVER_TYPES.append('ADAM')
 
     @override
     def __init__(self):
