@@ -49,7 +49,7 @@ class ComputeMAPTask(Task):
 
         match = re.match(r'.*P-R Moderate mAP %s' % float_exp, line, flags=re.IGNORECASE)
         if match:
-            value = float(match.group(1))
+            value = float(match.group(1)) / 100.0
             self.mAP = value
 
         print line
