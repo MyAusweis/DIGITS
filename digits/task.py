@@ -162,6 +162,15 @@ class Task(StatusCls):
         """
         raise NotImplementedError
 
+    def task_environment(self, resources):
+        """
+        Returns a dict of environment variables that need to be set when running the task
+
+        Arguments:
+        resources -- the resources assigned by the scheduler for this task
+        """
+        return {}
+
     def before_run(self):
         """
         Called before run() executes
@@ -179,6 +188,7 @@ class Task(StatusCls):
         self.before_run()
 
         env = os.environ.copy()
+        env.update(self.task_environment(resources))
         args = self.task_arguments(resources, env )
         if not args:
             self.logger.error('Could not create the arguments for Popen')

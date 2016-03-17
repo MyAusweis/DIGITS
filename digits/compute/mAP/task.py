@@ -52,6 +52,7 @@ class ComputeMAPTask(Task):
             value = float(match.group(1))
             self.mAP = value
 
+        print line
         return True
 
     @override
@@ -89,10 +90,14 @@ class ComputeMAPTask(Task):
                 '--results-dir', self.tempdir,
                 ]
 
-#        if self.gpu is not None:
-#            args.insert(0, 'CUDA_VISIBLE_DEVICES=%d' % self.gpu)
-
         return args
+
+    @override
+    def task_environment(self, resources):
+        if self.gpu is not None:
+            return {'CUDA_VISIBLE_DEVICES': str(self.gpu)}
+        else:
+            return {}
 
     @override
     def after_run(self):
