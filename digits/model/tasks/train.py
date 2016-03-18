@@ -540,7 +540,7 @@ class TrainTask(Task):
         if added_val_data:
             data['columns'].append(['val_epochs'] + self.val_outputs['epoch'].data[::stride])
 
-        if self.async_outputs:
+        if hasattr(self, 'async_outputs') and self.async_outputs:
             for name, output in self.async_outputs.iteritems():
                 if cull:
                     # max 200 data points
