@@ -8,10 +8,9 @@ import sys
 import tempfile
 
 import digits
+from digits.config import config_value
 from digits.task import Task
 from digits.utils import subclass, override
-
-PATH_TO_INFER_SCRIPT = '/home/lyeager/code/dlar/digits-detector/scripts/infer.py'
 
 @subclass
 class ComputeMAPTask(Task):
@@ -82,8 +81,9 @@ class ComputeMAPTask(Task):
 
     @override
     def task_arguments(self, resources, env):
+        path_to_infer_script = os.path.join(config_value('digits_detector_root'), 'scripts', 'infer.py')
         args = [sys.executable,
-                PATH_TO_INFER_SCRIPT,
+                path_to_infer_script,
                 '--val-path', self.val_dir,
                 '--model-def', self.network,
                 '--weights', self.weights,

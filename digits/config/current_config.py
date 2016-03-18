@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 from .caffe_option import CaffeOption
+from .digits_detector_option import DigitsDetectorOption
 from .gpu_list import GpuListOption
 from .jobs_dir import JobsDirOption
 from .log_file import LogFileOption
@@ -27,6 +28,7 @@ def reset():
             SecretKeyOption(),
             CaffeOption(),
             TorchOption(),
+            DigitsDetectorOption(),
             ]
 
 reset()
