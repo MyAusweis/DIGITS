@@ -878,17 +878,20 @@ class CaffeTrainTask(TrainTask):
 
             # XXX GTC Demo
             if self.dataset.is_drivenet():
-                snapshot = self.snapshots[-1][0]
-                epoch = self.snapshots[-1][1]
-                mAP_job = ComputeMAPJob(
-                    network = self.path(self.deploy_file),
-                    weights = self.path(snapshot),
-                    val_dir = os.path.dirname(self.dataset.drivenet_val_labels_dir),
-                    callback = mAP_callback,
-                    callback_arg = {'task': self, 'epoch': epoch},
-                )
-                from digits.webapp import scheduler
-                scheduler.add_job(mAP_job, background_job = True)
+                if config_value('digits_detector_root'):
+                    snapshot = self.snapshots[-1][0]
+                    epoch = self.snapshots[-1][1]
+                    mAP_job = ComputeMAPJob(
+                        network = self.path(self.deploy_file),
+                        weights = self.path(snapshot),
+                        val_dir = os.path.dirname(self.dataset.drivenet_val_labels_dir),
+                        callback = mAP_callback,
+                        callback_arg = {'task': self, 'epoch': epoch},
+                    )
+                    from digits.webapp import scheduler
+                    scheduler.add_job(mAP_job, background_job = True)
+                else:
+                    self.logger.warning('Not calculating mAP since digits_detector_root is unset')
 
             return True
 

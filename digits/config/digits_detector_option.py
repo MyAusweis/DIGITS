@@ -20,7 +20,7 @@ class DigitsDetectorOption(config_option.Option):
         return 'Where is the Digits Detector project installed?'
 
     def optional(self):
-        return False
+        return True
 
     def suggestions(self):
         suggestions = []
