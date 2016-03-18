@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from .tasks import ObjectDetectionInferenceTask
 
 import digits.frameworks
+from digits.config import config_value
 from digits.task import Task
 from digits.job import Job
 from digits.utils import subclass, override
@@ -28,7 +29,7 @@ class InferenceJob(Job):
         fw_id = model.train_task().framework_id
         fw = digits.frameworks.get_framework_by_id(fw_id)
 
-        if model.dataset.is_drivenet():
+        if model.dataset.is_drivenet() and config_value('digits_detector_root'):
             # create object detection inference task
             # (only supported with Caffe and without layer visualization)
             self.tasks.append(ObjectDetectionInferenceTask(
