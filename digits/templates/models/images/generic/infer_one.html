@@ -19,14 +19,19 @@
     </h1>
 </div>
 
+{% endblock %}
+
+{# Tmp change: move image to wider column for better visualization #}
+
+{% block job_content_details %}
 
 <div class="row">
     {% if image_src %}
-    <div class="col-sm-6">
+    <div class="col-sm-8">
         <img src="{{image_src}}" style="max-width:100%;" />
     </div>
 
-    <div class="col-sm-6">
+    <div class="col-sm-2">
         {% for name, blob in network_outputs.iteritems() %}
         <h4>{{name}}</h4>
         {{blob}}
@@ -38,10 +43,6 @@
     </div>
     {% endif %}
 </div>
-
-{% endblock %}
-
-{% block job_content_details %}
 
 <script type="text/javascript">
     function drawHistogram(id, data) {

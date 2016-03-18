@@ -1,8 +1,10 @@
 # Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
 from __future__ import absolute_import
 
-from . import tasks
+from .tasks import ObjectDetectionInferenceTask
+
 import digits.frameworks
+from digits.task import Task
 from digits.job import Job
 from digits.utils import subclass, override
 
@@ -26,13 +28,22 @@ class InferenceJob(Job):
         fw_id = model.train_task().framework_id
         fw = digits.frameworks.get_framework_by_id(fw_id)
 
-        # create inference task
-        self.tasks.append(fw.create_inference_task(
-            job_dir   = self.dir(),
-            model     = model,
-            images    = images,
-            epoch     = epoch,
-            layers    = layers))
+        if model.dataset.is_drivenet():
+            # create object detection inference task
+            # (only supported with Caffe and without layer visualization)
+            self.tasks.append(ObjectDetectionInferenceTask(
+                job_dir   = self.dir(),
+                model     = model,
+                images    = images,
+                epoch     = epoch))
+        else:
+            # create inference task
+            self.tasks.append(fw.create_inference_task(
+                job_dir   = self.dir(),
+                model     = model,
+                images    = images,
+                epoch     = epoch,
+                layers    = layers))
 
     @override
     def __getstate__(self):
@@ -44,8 +55,8 @@ class InferenceJob(Job):
         return state_to_save
 
     def inference_task(self):
-        """Return the first and only InferenceTask for this job"""
-        return [t for t in self.tasks if isinstance(t, tasks.InferenceTask)][0]
+        """Return the first and only Task for this job"""
+        return [t for t in self.tasks if isinstance(t, Task)][0]
 
     @override
     def __setstate__(self, state):

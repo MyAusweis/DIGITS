@@ -505,7 +505,8 @@ def add_bboxes_to_image(image, bboxes, color='red', width=1):
         r = max(bbox[0][0], bbox[1][0])
         t = min(bbox[0][1], bbox[1][1])
         b = max(bbox[0][1], bbox[1][1])
-        return ((l - n, t - n), (r + n, b + n))
+        # grow rectangle inwards to prevent writing outside of image borders
+        return ((l + n, t + n), (r - n, b - n))
 
     from PIL import Image, ImageDraw
     draw = ImageDraw.Draw(image)
