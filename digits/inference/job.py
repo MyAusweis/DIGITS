@@ -31,12 +31,22 @@ class InferenceJob(Job):
 
         if model.dataset.is_drivenet() and config_value('digits_detector_root'):
             # create object detection inference task
-            # (only supported with Caffe and without layer visualization)
+            # (only supported with Caffe)
             self.tasks.append(ObjectDetectionInferenceTask(
                 job_dir   = self.dir(),
                 model     = model,
                 images    = images,
                 epoch     = epoch))
+            if layers and layers != 'none':
+                # Create a separate task for calculating visualizations
+                self.using_separate_task_for_vis = True
+                self.tasks.append(fw.create_inference_task(
+                    job_dir   = self.dir(),
+                    model     = model,
+                    images    = images,
+                    epoch     = epoch,
+                    layers    = layers))
+
         else:
             # create inference task
             self.tasks.append(fw.create_inference_task(
@@ -65,6 +75,15 @@ class InferenceJob(Job):
 
     def get_data(self):
         """Return inference data"""
+        if hasattr(self, 'using_separate_task_for_vis') and self.using_separate_task_for_vis:
+            # XXX GTC Demo
+            inference_task = self.tasks[0]
+            vis_task = self.tasks[1]
+            return (
+                inference_task.inference_inputs,
+                inference_task.inference_outputs,
+                vis_task.inference_layers)
+
         task = self.inference_task()
         return task.inference_inputs, task.inference_outputs, task.inference_layers
 

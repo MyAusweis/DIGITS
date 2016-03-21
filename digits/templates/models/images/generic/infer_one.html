@@ -19,30 +19,40 @@
     </h1>
 </div>
 
-{% endblock %}
-
-{# Tmp change: move image to wider column for better visualization #}
-
-{% block job_content_details %}
-
 <div class="row">
     {% if image_src %}
-    <div class="col-sm-8">
+
+    {% if not model_job.dataset.is_drivenet() %}
+    {# Standard formatting #}
+
+    <div class="col-sm-6">
         <img src="{{image_src}}" style="max-width:100%;" />
     </div>
 
-    <div class="col-sm-2">
+    <div class="col-sm-6">
         {% for name, blob in network_outputs.iteritems() %}
         <h4>{{name}}</h4>
         {{blob}}
         {% endfor %}
     </div>
+
+    {% else %}
+    {# GTC Demo formatting #}
+
+    <img src="{{image_src}}" style="max-width:100%;" />
+
+    {% endif %}
+
     {% else %}
     <div class="alert alert-danger">
         <p>Inference failed, see job log</p>
     </div>
     {% endif %}
 </div>
+
+{% endblock %}
+
+{% block job_content_details %}
 
 <script type="text/javascript">
     function drawHistogram(id, data) {
