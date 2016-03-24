@@ -104,32 +104,32 @@ $('#db-tabs a[href="#db-{{ form.method.data }}"]').tab('show');
                     <h4>GTC Demo</h4>
                 </div>
                 <div class="col-sm-6">
-                    <div class="form-group{{mark_errors([form.is_drivenet_data])}}">
-                        {{ form.is_drivenet_data.label }}
-                        {{ form.is_drivenet_data.tooltip }}
-                        {{ form.is_drivenet_data }}
+                    <div class="form-group{{mark_errors([form.is_detectnet_data])}}">
+                        {{ form.is_detectnet_data.label }}
+                        {{ form.is_detectnet_data.tooltip }}
+                        {{ form.is_detectnet_data }}
                     </div>
                 </div>
                 <div class="col-sm-6">
-                    <div class="form-group{{mark_errors([form.drivenet_val_labels_dir])}}">
-                        {{ form.drivenet_val_labels_dir.label }}
-                        {{ form.drivenet_val_labels_dir.tooltip }}
-                        {{ form.drivenet_val_labels_dir(class='form-control autocomplete_path') }}
+                    <div class="form-group{{mark_errors([form.detectnet_val_labels_dir])}}">
+                        {{ form.detectnet_val_labels_dir.label }}
+                        {{ form.detectnet_val_labels_dir.tooltip }}
+                        {{ form.detectnet_val_labels_dir(class='form-control autocomplete_path') }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <script>
-function toggle_enabled_drivenet_val_labels_dir() {
-    if ($("#is_drivenet_data").is(':checked')) {
-        $("#drivenet_val_labels_dir").prop('disabled', false);
+function toggle_enabled_detectnet_val_labels_dir() {
+    if ($("#is_detectnet_data").is(':checked')) {
+        $("#detectnet_val_labels_dir").prop('disabled', false);
     } else {
-        $("#drivenet_val_labels_dir").prop('disabled', true);
+        $("#detectnet_val_labels_dir").prop('disabled', true);
     }
 }
-$("#is_drivenet_data").change(toggle_enabled_drivenet_val_labels_dir);
-toggle_enabled_drivenet_val_labels_dir();
+$("#is_detectnet_data").change(toggle_enabled_detectnet_val_labels_dir);
+toggle_enabled_detectnet_val_labels_dir();
     </script>
 
     <div class="row">

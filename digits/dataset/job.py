@@ -91,8 +91,17 @@ class DatasetJob(Job):
 
     # XXX GTC Demo
 
-    def is_drivenet(self):
+    def is_detectnet(self):
         try:
-            return self._is_drivenet
+            return self._is_detectnet
         except AttributeError:
-            return False
+            try:
+                return self._is_drivenet
+            except AttributeError:
+                return False
+
+    def detectnet_val_labels_dir(self):
+        try:
+            return self.drivenet_val_labels_dir
+        except AttributeError:
+            return self._detectnet_val_labels_dir

@@ -718,7 +718,7 @@ class CaffeTrainTask(TrainTask):
         solver.weight_decay = 0.0005
 
         # XXX GTC Demo
-        if self.dataset.is_drivenet():
+        if self.dataset.is_detectnet():
             solver.weight_decay = 0.00000001
             if solver.solver_type == solver.ADAM:
                 solver.momentum2 = 0.999
@@ -877,14 +877,14 @@ class CaffeTrainTask(TrainTask):
             self.saving_snapshot = False
 
             # XXX GTC Demo
-            if self.dataset.is_drivenet():
+            if self.dataset.is_detectnet():
                 if config_value('digits_detector_root'):
                     snapshot = self.snapshots[-1][0]
                     epoch = self.snapshots[-1][1]
                     mAP_job = ComputeMAPJob(
                         network = self.path(self.deploy_file),
                         weights = self.path(snapshot),
-                        val_dir = os.path.dirname(self.dataset.drivenet_val_labels_dir),
+                        val_dir = os.path.dirname(self.dataset.detectnet_val_labels_dir()),
                         callback = mAP_callback,
                         callback_arg = {'task': self, 'epoch': epoch},
                     )

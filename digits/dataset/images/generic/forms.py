@@ -88,18 +88,18 @@ class GenericImageDatasetForm(ImageDatasetForm):
 
     # XXX GTC demo
 
-    is_drivenet_data = utils.forms.BooleanField(
-        'DriveNet data',
-        tooltip='Check if this data should be flagged for use with DriveNet',
+    is_detectnet_data = utils.forms.BooleanField(
+        'DetectNet Data',
+        tooltip='Check if this data is formatted for use with DetectNet',
     )
-    drivenet_val_labels_dir = utils.forms.StringField(
+    detectnet_val_labels_dir = utils.forms.StringField(
         'Validation labels directory',
         validators=[
-            validate_required_iff(is_drivenet_data=True),
+            validate_required_iff(is_detectnet_data=True),
         ],
         tooltip='The original KITTI-formatted label textfiles are needed for mAP calculations',
     )
-    def validate_drivenet_val_labels_dir(form, field):
+    def validate_detectnet_val_labels_dir(form, field):
         if not field.data:
             pass
         else:

@@ -29,7 +29,7 @@ class InferenceJob(Job):
         fw_id = model.train_task().framework_id
         fw = digits.frameworks.get_framework_by_id(fw_id)
 
-        if model.dataset.is_drivenet() and config_value('digits_detector_root'):
+        if model.dataset.is_detectnet() and config_value('digits_detector_root'):
             # create object detection inference task
             # (only supported with Caffe)
             self.tasks.append(ObjectDetectionInferenceTask(
