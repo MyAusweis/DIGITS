@@ -39,7 +39,14 @@
     {% else %}
     {# GTC Demo formatting #}
 
+    <p>
     <img src="{{image_src}}" style="max-width:100%;" />
+    </p>
+
+    <div class="alert alert-warning">
+        Detections are shown as red boxes.
+        If no boxes are shown, then there were no detections for this image.
+    </div>
 
     {% endif %}
 
