@@ -497,6 +497,15 @@ def add_bboxes_to_image(image, bboxes, color='red', width=1):
     add_bboxes_to_image(image, bboxes[filename], width=2, color='#FF7700')
     image.show()
     """
+    if image is None:
+        return None
+    elif isinstance(image, PIL.Image.Image):
+        pass
+    elif isinstance(image, np.ndarray):
+        image = PIL.Image.fromarray(image)
+    else:
+        raise ValueError('image must be a PIL.Image or a np.ndarray')
+
     def expanded_bbox(bbox, n):
         """
         Grow the bounding box by n pixels

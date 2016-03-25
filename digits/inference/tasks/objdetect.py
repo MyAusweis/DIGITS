@@ -9,12 +9,17 @@ import shutil
 import sys
 import tempfile
 
+from google.protobuf import text_format
+import PIL.Image
+
 import digits
 from digits import utils
 from digits.config import config_value
 from digits.task import Task
 from digits.utils import subclass, override
 from .inference import InferenceTask
+
+import caffe_pb2
 
 @subclass
 class ObjectDetectionInferenceTask(Task):
@@ -41,6 +46,15 @@ class ObjectDetectionInferenceTask(Task):
         self.inference_inputs = None
         self.inference_outputs = None
         self.inference_layers = []
+
+        # Get data shape from deploy file
+        tmp_network = caffe_pb2.NetParameter()
+        with open(self.model.path(self.model.train_task().deploy_file)) as infile:
+            text_format.Merge(infile.read(), tmp_network)
+        if tmp_network.input_shape:
+            self.data_shape = tmp_network.input_shape[0].dim
+        else:
+            self.data_shape = tmp_network.input_dim[:4]
 
         super(ObjectDetectionInferenceTask, self).__init__(**kwargs)
 
@@ -79,7 +93,23 @@ class ObjectDetectionInferenceTask(Task):
         self.tempdir = tempfile.mkdtemp()
         # copy all images to temp directory
         for image_path in self.images:
-            shutil.copy(image_path, self.tempdir)
+            image = utils.image.load_image(image_path)
+            image = utils.image.resize_image(
+                image,
+                self.data_shape[2]-1, # height
+                self.data_shape[3]-1, # width
+                channels=self.data_shape[1],
+                resize_mode='squash',
+            )
+            image = PIL.Image.fromarray(image)
+            new_path = os.path.join(
+                self.tempdir,
+                os.path.basename(image_path),
+            )
+            image.save(
+                new_path,
+                format='PNG', # XXX regardless of filename
+            )
 
     @override
     def task_arguments(self, resources, env):
@@ -146,18 +176,20 @@ class ObjectDetectionInferenceTask(Task):
             self.inference_inputs['ids'].append(idx)
             image = utils.image.load_image(fname)
 
-            # TODO: what is the best way to resize images here (squash, padding, ...)?
-            #image = utils.image.resize_image(image,
-            #            height, width, # todo get this from network
-            #            channels    = channels
-            #            )
+            image = utils.image.resize_image(
+                image,
+                self.data_shape[2], # height
+                self.data_shape[3], # width
+                channels=self.data_shape[1],
+                resize_mode='squash',
+            )
 
             base_name = os.path.basename(fname)
             if os.path.basename(base_name) in detections:
                 self.inference_outputs['bboxes'].append(detections[base_name])
                 # draw bounding boxes
                 for bbox in detections[base_name]:
-                    utils.image.add_bboxes_to_image(image, [bbox[1]], width=2)
+                    image = utils.image.add_bboxes_to_image(image, [bbox[1]], width=2)
             else:
                 # no detection for this file
                 self.inference_outputs['bboxes'].append([])
