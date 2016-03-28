@@ -54,7 +54,7 @@
                     {# XXX GTC Demo #}
                     {% if job.is_detectnet() %}
                     <dt>Validation labels</dt>
-                    <dd>{{ job.detectnet_val_labels_dir }}</dd>
+                    <dd>{{ job.detectnet_val_labels_dir() }}</dd>
                     {% endif %}
                 </dl>
             </div>
