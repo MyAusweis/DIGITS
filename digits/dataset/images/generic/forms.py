@@ -75,7 +75,7 @@ class GenericImageDatasetForm(ImageDatasetForm):
                 (0, 'No'),
                 ],
             coerce = int,
-            default = 1,
+            default = 0,
             tooltip = 'Check that each entry in the database has the same shape (can be time-consuming)'
             )
 
