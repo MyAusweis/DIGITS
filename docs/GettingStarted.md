@@ -27,7 +27,7 @@ Dataset directory is created successfully at '/home/username/mnist'
 Done after 16.722807169 seconds.
 ```
 
-See [Standard Datasets](StandardDatasets.md) for details about the folder format used.
+See [Standard Datasets](StandardDatasets.md) for details about this script.
 
 ## Using the Webapp
 
