@@ -8,6 +8,7 @@ If those don't work for you for some reason, these instructions will walk you th
 On other platforms, installation of DIGITS itself should be pretty simple since it is a pure Python project.
 The difficulty will come from installing and configuring Caffe and/or Torch7.
 Though other platforms are not supported officially, users have successfully installed DIGITS and Caffe on CentOS, OSX and even Windows (using the `windows` branch on BVLC/caffe).
+The [document](BuildDigitsWindows.md) provides instructions on how to set up DIGITS and its dependencies on Windows.
 
 ## Dependencies
 
