@@ -4,12 +4,25 @@ from __future__ import absolute_import
 import flask
 import werkzeug.exceptions
 
+from . import DatasetJob
 from . import images as dataset_images
 from . import generic
 from digits.utils.routing import job_from_request, request_wants_json
 from digits.webapp import scheduler
 
 blueprint = flask.Blueprint(__name__, __name__)
+
+@blueprint.route('.json', methods=['GET'])
+def index():
+    """
+    Return list of jobs
+    """
+    return flask.jsonify(
+        {
+            'datasets': [j.json_dict()
+                       for j in scheduler.jobs.values() if isinstance(j, DatasetJob)],
+        }
+    )
 
 @blueprint.route('/<job_id>.json', methods=['GET'])
 @blueprint.route('/<job_id>', methods=['GET'])

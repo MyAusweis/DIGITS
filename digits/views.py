@@ -22,98 +22,81 @@ from digits.utils.routing import request_wants_json
 
 blueprint = flask.Blueprint(__name__, __name__)
 
-@blueprint.route('/index.json', methods=['GET'])
 @blueprint.route('/', methods=['GET'])
 def home():
     """
     DIGITS home page
-    Returns information about each job on the server
-
-    Returns JSON when requested:
-        {
-            datasets: [{id, name, status},...],
-            models: [{id, name, status},...]
-        }
     """
     running_datasets    = get_job_list(dataset.DatasetJob, True)
     completed_datasets  = get_job_list(dataset.DatasetJob, False)
     running_models      = get_job_list(model.ModelJob, True)
     completed_models    = get_job_list(model.ModelJob, False)
 
-    if request_wants_json():
-        data = {
-                'datasets': [j.json_dict()
-                    for j in running_datasets + completed_datasets],
-                'models': [j.json_dict()
-                    for j in running_models + completed_models],
-                }
-        return flask.jsonify(data)
-    else:
-        new_dataset_options = {
-            'Images': {
-                'image-classification': {
-                    'title': 'Classification',
-                    'url': flask.url_for(
-                        'digits.dataset.images.classification.views.new'),
-                    },
-                'image-other': {
-                    'title': 'Other',
-                    'url': flask.url_for(
-                        'digits.dataset.images.generic.views.new'),
-                    },
+    new_dataset_options = {
+        'Images': {
+            'image-classification': {
+                'title': 'Classification',
+                'url': flask.url_for(
+                    'digits.dataset.images.classification.views.new'),
                 },
+            'image-other': {
+                'title': 'Other',
+                'url': flask.url_for(
+                    'digits.dataset.images.generic.views.new'),
+                },
+            },
+        }
+
+    new_model_options = {
+        'Images': {
+            'image-classification': {
+                'title': 'Classification',
+                'url': flask.url_for(
+                    'digits.model.images.classification.views.new'),
+                },
+            'image-other': {
+                'title': 'Other',
+                'url': flask.url_for(
+                    'digits.model.images.generic.views.new'),
+                },
+            },
+        }
+
+    # add dataset options for known dataset extensions
+    data_extensions = config_value('data_extension_list')
+    for extension in data_extensions:
+        ext_category = extension.get_category()
+        ext_title = extension.get_title()
+        ext_id = extension.get_id()
+        if ext_category not in new_dataset_options:
+            new_dataset_options[ext_category] = {}
+        new_dataset_options[ext_category][ext_id] = {
+            'title': ext_title,
+            'url': flask.url_for(
+                'digits.dataset.generic.views.new',
+                extension_id=ext_id),
+            }
+        if ext_category not in new_model_options:
+            new_model_options[ext_category] = {}
+        new_model_options[ext_category][ext_id] = {
+            'title': ext_title,
+            'url': flask.url_for(
+                'digits.model.images.generic.views.new',
+                extension_id=ext_id),
             }
 
-        new_model_options = {
-            'Images': {
-                'image-classification': {
-                    'title': 'Classification',
-                    'url': flask.url_for(
-                        'digits.model.images.classification.views.new'),
-                    },
-                'image-other': {
-                    'title': 'Other',
-                    'url': flask.url_for(
-                        'digits.model.images.generic.views.new'),
-                    },
-                },
-            }
-
-        # add dataset options for known dataset extensions
-        data_extensions = config_value('data_extension_list')
-        for extension in data_extensions:
-            ext_category = extension.get_category()
-            ext_title = extension.get_title()
-            ext_id = extension.get_id()
-            if ext_category not in new_dataset_options:
-                new_dataset_options[ext_category] = {}
-            new_dataset_options[ext_category][ext_id] = {
-                'title': ext_title,
-                'url': flask.url_for(
-                    'digits.dataset.generic.views.new',
-                    extension_id=ext_id),
-                }
-            if ext_category not in new_model_options:
-                new_model_options[ext_category] = {}
-            new_model_options[ext_category][ext_id] = {
-                'title': ext_title,
-                'url': flask.url_for(
-                    'digits.model.images.generic.views.new',
-                    extension_id=ext_id),
-                }
-
-        return flask.render_template(
-            'home.html',
-            new_dataset_options=new_dataset_options,
-            running_datasets=running_datasets,
-            completed_datasets=completed_datasets,
-            new_model_options=new_model_options,
-            running_models=running_models,
-            completed_models=completed_models,
-            total_gpu_count=len(scheduler.resources['gpus']),
-            remaining_gpu_count=sum(r.remaining()
-                                    for r in scheduler.resources['gpus']),
-            )
+    return flask.render_template(
+        'home.html',
+        new_dataset_options=new_dataset_options,
+        running_datasets=running_datasets,
+        completed_datasets=completed_datasets,
+        new_model_options=new_model_options,
+        running_models=running_models,
+        completed_models=completed_models,
+        total_gpu_count=len(scheduler.resources['gpus']),
+        remaining_gpu_count=sum(r.remaining()
+                                for r in scheduler.resources['gpus']),
+        )
 
 
 server_start_time = time.time()
@@ -289,6 +272,21 @@ def logout():
 
 
 ### Jobs routes
+
+@blueprint.route('/jobs.json', methods=['GET'])
+@blueprint.route('/index.json', methods=['GET'])  # legacy
+def index():
+    """
+    Return list of jobs
+    """
+    return flask.jsonify(
+        {
+            'datasets': [j.json_dict()
+                       for j in scheduler.jobs.values() if isinstance(j, dataset.DatasetJob)],
+            'models': [j.json_dict()
+                       for j in scheduler.jobs.values() if isinstance(j, model.ModelJob)],
+        }
+    )
 
 @blueprint.route('/jobs/<job_id>', methods=['GET'])
 def show_job(job_id):

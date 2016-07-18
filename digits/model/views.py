@@ -21,6 +21,18 @@ from digits.webapp import scheduler
 
 blueprint = flask.Blueprint(__name__, __name__)
 
+@blueprint.route('.json', methods=['GET'])
+def index():
+    """
+    Return list of jobs
+    """
+    return flask.jsonify(
+        {
+            'models': [j.json_dict()
+                       for j in scheduler.jobs.values() if isinstance(j, ModelJob)],
+        }
+    )
+
 @blueprint.route('/<job_id>.json', methods=['GET'])
 @blueprint.route('/<job_id>', methods=['GET'])
 def show(job_id):
