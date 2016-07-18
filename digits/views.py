@@ -3,9 +3,10 @@ from __future__ import absolute_import
 
 import glob
 import json
-import platform
-import traceback
 import os
+import platform
+import time
+import traceback
 
 import flask
 from flask.ext.socketio import join_room, leave_room
@@ -41,15 +42,11 @@ def home():
 
     if request_wants_json():
         data = {
-                'version': digits.__version__,
-                'jobs_dir': config_value('jobs_dir'),
                 'datasets': [j.json_dict()
                     for j in running_datasets + completed_datasets],
                 'models': [j.json_dict()
                     for j in running_models + completed_models],
                 }
-        if config_value('server_name'):
-            data['server_name'] = config_value('server_name')
         return flask.jsonify(data)
     else:
         new_dataset_options = {
@@ -117,6 +114,36 @@ def home():
             remaining_gpu_count=sum(r.remaining()
                                     for r in scheduler.resources['gpus']),
             )
+
+
+server_start_time = time.time()
+@blueprint.route('/info.json', methods=['GET'])
+def server_info():
+    """
+    Return a summary of the server
+    """
+    data = {
+        'server': {
+            'version': digits.__version__,
+            'uptime': utils.time_filters.print_time_diff(time.time() - server_start_time),
+        },
+        'jobs': {
+            'running': len([j.id for j in scheduler.jobs.values() if j.status.is_running()]),
+            'total': len(scheduler.jobs),
+        },
+        'gpus': {
+            'available': sum(r.remaining() for r in scheduler.resources['gpus']),
+            'total': len(scheduler.resources['gpus']),
+        },
+        'caffe': {
+            'version': config_value('caffe_root')['ver_str'],
+            'flavor': config_value('caffe_root')['flavor'],
+        },
+    }
+    if config_value('server_name'):
+        data['server']['name'] = config_value('server_name')
+
+    return flask.jsonify(data)
 
 
 def json_dict(job, model_output_fields):
