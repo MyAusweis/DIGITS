@@ -8,7 +8,7 @@ LOCAL_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Get current __version__
 version_locals = {}
-execfile(os.path.join(LOCAL_DIR, 'digits', 'version.py'), {}, version_locals)
+execfile(os.path.join(LOCAL_DIR,'digits','version.py'), {}, version_locals)
 
 # Get requirements
 requirements = []
