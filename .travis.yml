@@ -8,6 +8,7 @@ python: 2.7
 
 env:
     matrix:
+        - LINT_CHECK=true
         - DIGITS_TEST_FRAMEWORK=caffe CAFFE_FORK=NVIDIA
         - DIGITS_TEST_FRAMEWORK=caffe CAFFE_FORK=BVLC
         - DIGITS_TEST_FRAMEWORK=torch
@@ -20,63 +21,30 @@ cache:
         - ~/caffe
         - ~/torch
 
-addons:
-    apt:
-        packages:
-            - build-essential
-            - cmake
-            - cython
-            - git
-            - gfortran
-            - graphviz
-            - libboost-filesystem-dev
-            - libboost-python-dev
-            - libboost-system-dev
-            - libboost-thread-dev
-            - libgflags-dev
-            - libgoogle-glog-dev
-            - libhdf5-serial-dev
-            - libleveldb-dev
-            - liblmdb-dev
-            - libopenblas-dev
-            - libopencv-dev
-            - libprotobuf-dev
-            - libsnappy-dev
-            - protobuf-compiler
-            - python-dev
-            - python-flask
-            - python-gevent
-            - python-gevent-websocket
-            - python-gflags
-            - python-h5py
-            - python-matplotlib
-            - python-mock
-            - python-nose
-            - python-numpy
-            - python-pil
-            - python-pip
-            - python-protobuf
-            - python-psutil
-            - python-requests
-            - python-scipy
-            - python-six
-            - python-skimage
-
 services:
     - docker
 
 before_install:
+      # envvar calculations
+    - export LINT_CHECK=${LINT_CHECK:-false}
+    - export DEB_BUILD=${DEB_BUILD:-false}
+    - if $DEB_BUILD || $LINT_CHECK; then export RUN_TESTS=false; else export RUN_TESTS=true; fi
+    - if $RUN_TESTS && [ "$DIGITS_TEST_FRAMEWORK" == "torch" ]; then export TEST_TORCH=true; else export TEST_TORCH=false; fi
+
+      # create new virtualenv
     - deactivate
     - virtualenv --system-site-packages ~/venv
     - source ~/venv/bin/activate
 
 install:
-    - ./scripts/travis/install-caffe.sh ~/caffe
-    - travis_wait ./scripts/travis/install-torch.sh ~/torch
-    - ./scripts/travis/install-python-requirements.sh
-    - ./scripts/travis/install-digits.sh
+    - ./scripts/travis/install-apt.sh
+    - if $RUN_TESTS; then ./scripts/travis/install-caffe.sh ~/caffe; fi
+    - if $TEST_TORCH; then travis_wait ./scripts/travis/install-torch.sh ~/torch; fi
+    - if $RUN_TESTS; then ./scripts/travis/install-python-requirements.sh; fi
+    - if $RUN_TESTS; then ./scripts/travis/install-digits.sh; fi
 
 script:
-    - ./scripts/travis/test.sh
-    - ./scripts/travis/deb-build.sh
+    - if $RUN_TESTS; then ./scripts/travis/run-tests.sh; fi
+    - if $LINT_CHECK; then ./digits-lint; fi
+    - if $DEB_BUILD; then ./scripts/travis/deb-build.sh; fi
 
