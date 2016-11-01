@@ -13,7 +13,6 @@ env:
         # Fixes for Torch and OpenBLAS
         - OMP_NUM_THREADS=1
         - OPENBLAS_MAIN_FREE=1
-        - secure: "WSqrE+PQm76DdoRLRGKTK6fRWfXZjIb0BWCZm3IgHgFO7OE6fcK2tBnpDNNw4XQjmo27FFWlEhxN32g18P84n5PvErHaH65IuS9Nv6FkLlPXZlVqGNxbPmEA4oTkD/6Y6kZyZWZtLh2+/1ijuzQAPnIy/4BEuL8pdO+PsoJ9hYM="
     matrix:
         - DIGITS_TEST_FRAMEWORK=caffe CAFFE_FORK=NVIDIA
         - DIGITS_TEST_FRAMEWORK=caffe CAFFE_FORK=BVLC
@@ -46,8 +45,8 @@ matrix:
               - git fetch nvidia-digits-upstream --tags
               - pip install twine
           script:
-              - DEBIAN_REVISION=1ppa1~trusty ./packaging/deb/build.sh
-              - DEBIAN_REVISION=1ppa1~xenial ./packaging/deb/build.sh
+#              - DEBIAN_REVISION=1ppa1~trusty ./packaging/deb/build.sh
+#              - DEBIAN_REVISION=1ppa1~xenial ./packaging/deb/build.sh
               - python setup.py sdist bdist_wheel
           deploy:
               - provider: script
@@ -62,12 +61,20 @@ matrix:
                 on:
                     repo: NVIDIA/DIGITS
                     branch: master
-              - provider: script  # not pypi because travis-ci/dpl#334
+              - provider: pypi
+                user: luke.yeager
+                password:
+                    secure: WQAa4mrHtctx6QFuEtAIvM4L3JfXglnZTGjeAQ5j8tytQKv+yn+wUqh2VXklKabquiF8nys8e8rFgBWNT/7xNB0ccV7sgxT55KfK/4TjKpHUKx3RIikt9LauJ7RbNYHJ42UV3pNryNfTM7oiJJpEiPHbHumgXd1dROv8hR+x8nk=
                 skip_cleanup: true
-                script: ./scripts/travis/pypi-upload.sh
+                distributions: sdist bdist_wheel
+                skip_upload_docs: true
+                server: https://testpypi.python.org/pypi
                 on:
-                    repo: NVIDIA/DIGITS
-                    tags: true
+                    repo: lukeyeager/DIGITS
+                    branch: testpypi-from-lukeyeager
+                edge:
+                    source: lukeyeager/dpl
+                    branch: pypi-docs-optional
 
 cache:
     apt: true
