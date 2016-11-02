@@ -67,7 +67,7 @@ matrix:
                     secure: WQAa4mrHtctx6QFuEtAIvM4L3JfXglnZTGjeAQ5j8tytQKv+yn+wUqh2VXklKabquiF8nys8e8rFgBWNT/7xNB0ccV7sgxT55KfK/4TjKpHUKx3RIikt9LauJ7RbNYHJ42UV3pNryNfTM7oiJJpEiPHbHumgXd1dROv8hR+x8nk=
                 skip_cleanup: true
                 distributions: sdist bdist_wheel
-                skip_upload_docs: true
+                skip_upload_docs: false
                 server: https://testpypi.python.org/pypi
                 on:
                     repo: lukeyeager/DIGITS
