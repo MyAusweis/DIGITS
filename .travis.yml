@@ -135,5 +135,6 @@ install:
     - pip install -e ./plugins/view/imageGradients
 
 script:
-    - ./digits-test -v
+    - ldconfig -p | grep openblas
+#    - ./digits-test -v
 

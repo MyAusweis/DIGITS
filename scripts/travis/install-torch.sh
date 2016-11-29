@@ -29,14 +29,17 @@ cd $INSTALL_DIR
 # Redirect build output to a log and only show it if an error occurs
 # Otherwise there is too much output for TravisCI to display properly
 LOG_FILE=$LOCAL_DIR/torch-install.log
-{ ./install-deps && ./install.sh -b ; } >$LOG_FILE 2>&1 || (cat $LOG_FILE && false)
 
-# install custom packages
-${INSTALL_DIR}/install/bin/luarocks install tds
-# you can't just install "hdf5" because it will install "lua-hdf5" instead of "torch-hdf5"
-${INSTALL_DIR}/install/bin/luarocks install "https://raw.github.com/deepmind/torch-hdf5/master/hdf5-0-0.rockspec"
-${INSTALL_DIR}/install/bin/luarocks install "https://raw.github.com/Neopallium/lua-pb/master/lua-pb-scm-0.rockspec"
-${INSTALL_DIR}/install/bin/luarocks install lightningmdb 0.9.18.1-1 LMDB_INCDIR=/usr/include LMDB_LIBDIR=/usr/lib/x86_64-linux-gnu
+./install-deps
+
+#{ ./install-deps && ./install.sh -b ; } >$LOG_FILE 2>&1 || (cat $LOG_FILE && false)
+#
+## install custom packages
+#${INSTALL_DIR}/install/bin/luarocks install tds
+## you can't just install "hdf5" because it will install "lua-hdf5" instead of "torch-hdf5"
+#${INSTALL_DIR}/install/bin/luarocks install "https://raw.github.com/deepmind/torch-hdf5/master/hdf5-0-0.rockspec"
+#${INSTALL_DIR}/install/bin/luarocks install "https://raw.github.com/Neopallium/lua-pb/master/lua-pb-scm-0.rockspec"
+#${INSTALL_DIR}/install/bin/luarocks install lightningmdb 0.9.18.1-1 LMDB_INCDIR=/usr/include LMDB_LIBDIR=/usr/lib/x86_64-linux-gnu
 
 # mark cache
 WEEK=`date +%Y-%W`
